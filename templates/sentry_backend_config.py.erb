@@ -1,0 +1,26 @@
+# Sentry postgres backend configuration
+#
+# This file has been provided by puppet for <%= @fqdn %>.
+# DON'T EDIT it manually, any changes will be lost
+#
+DATABASES = {
+    'default': {
+        # You can swap out the engine for MySQL easily by changing this value
+        # to ``django.db.backends.mysql`` or to PostgreSQL with
+        # ``django.db.backends.postgresql_psycopg2``
+
+        # If you change this, you'll also need to install the appropriate python
+        # package: psycopg2 (Postgres) or mysql-python
+        'ENGINE': '<%= @django_backend %>', 
+        'NAME': '<%= @db_name %>',
+        'USER': '<%= @db_user %>',
+        'PASSWORD': '<%= @db_password %>',
+        'HOST': '<%= @db_host %>',
+        'PORT': '<%= @db_port %>',
+
+        # If you're using Postgres, we recommend turning on autocommit
+        'OPTIONS': {
+            'autocommit': True,
+        }
+    }
+}

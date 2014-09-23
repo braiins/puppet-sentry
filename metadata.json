@@ -1,0 +1,20 @@
+{
+  "name": "braiins-sentry",
+  "version": "0.1.0",
+  "author": "braiins",
+  "summary": "This module configures sentry exception tracker.",
+  "license": "Apache 2.0",
+  "source": "git://github.com/braiins/puppet-sentry.git",
+  "project_page": "https://github.com/braiins/puppet-sentry",
+  "issues_url": "https://github.com/braiins/puppet-sentry/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_range": ">= 4.0.0"
+    },
+    {
+      "name": "puppetlabs-postgresql",
+      "version_range": ">= 4.0.0"
+    }
+  ]
+}
