@@ -7,7 +7,7 @@
 # Document parameters here.
 #
 # [*user*]
-#   System user that runs sentry
+#   System user name that runs sentry
 # [*db_host*]
 #   Optional database host where the backend runs. A new database will
 #   be deployed when undefined or points to localhost
@@ -18,7 +18,7 @@
 # [*backend_type*]
 #   See sentry::${backend_type}_{db,backend} defines
 # [*super_user*]
-#   Name of the super user/admin of sentry
+#   Name of the super user/admin of sentry. User resource must exist!
 # [*super_user_email*]
 #   Email of the super user
 # [*http_port*]
@@ -51,7 +51,7 @@ $http_port, $url_prefix, $allowed_hosts, $secret_key, $server_email) inherits se
   $sentry_init = "${sentry_exec} init"
   $sentry_upgrade = "${sentry_exec} upgrade"
 
-  $user_home = getparam(User[$owner], 'home')
+  $user_home = getparam(User[$user], 'home')
   $config_path = "${user_home}/${config_dir}"
 
   # All exec's run under the admin user
