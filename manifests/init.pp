@@ -31,9 +31,36 @@
 #   Django secret key for the sentry application
 # [*server_email*]
 #   From: field for email sent by the server
+# [*enable_supervisord_conf*]
+#   Enables the sentry service in supervisor (requires supervisor
+#   class to be instantiated)
 #
 # === Examples
 #
+# # The following snippet deploys admin user, supervisor and sentry
+# # with supervisor management enabled on a Debian system.
+#
+# $executable_path = '/usr/bin'
+# $config_path = '/etc/supervisor'
+# user { 'admin':
+#  ensure     => present,
+#  home       => '/home/admin',
+#  managehome => true,
+# } ->
+# class { '::supervisord':
+#   package_provider => 'aptitude',
+#   executable_path  => $executable_path,
+#   executable       => "${executable_path}/supervisord",
+#   executable_ctl   => "${executable_path}/supervisorctl",
+#   service_name     => 'supervisor',
+#   install_init     => false,
+#   config_include   => '/etc/supervisor/conf.d',
+#   config_file      => '/etc/supervisor/supervisord.conf',
+# } ->
+# class { 'sentry':
+#   user                    => 'admin',
+#   enable_supervisord_conf => true,
+# }
 #
 # === Authors
 #
@@ -45,7 +72,8 @@
 #
 class sentry($user, $db_host='localhost', $db_port, $db_name='sentry', $db_user='sentry_admin',
 $db_password, $backend_type, $super_user='admin', $super_user_email,
-$http_port, $url_prefix, $allowed_hosts, $secret_key, $server_email) inherits sentry::params {
+$http_port, $url_prefix, $allowed_hosts, $secret_key, $server_email,
+$enable_supervisord_conf=false) inherits sentry::params {
 
   $sentry_exec = '/usr/local/bin/sentry'
   $sentry_init = "${sentry_exec} init"
@@ -111,6 +139,32 @@ $http_port, $url_prefix, $allowed_hosts, $secret_key, $server_email) inherits se
   # Deploy the super user (optional)
   if $deploy_super_user {
     exec { "${sentry_exec} createsuperuser --noinput --username=${super_user} --email=${super_user_email}":
+    }
+  }
+
+  if $enable_supervisord_conf {
+    Supervisord::Program {
+      autostart       => true,
+      # NOTE: autorestart is not bool but string as it may have values:
+      # true/false/unexpected
+      autorestart     => 'true',
+      redirect_stderr => true,
+      user            => $user,
+      environment => {
+        'HOME'   => $user_home,
+        'USER'   => $user
+      }
+    }
+
+    supervisord::group { 'sentry':
+      priority => '100',
+      programs => ['sentry-web', 'sentry-worker',]
+    } ->
+    supervisord::program { 'sentry-web':
+      command => 'sentry start',
+    } ->
+    supervisord::program { 'sentry-worker':
+      command => 'sentry celery worker -B',
     }
   }
 }
