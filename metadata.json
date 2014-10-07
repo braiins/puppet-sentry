@@ -1,6 +1,6 @@
 {
   "name": "braiins-sentry",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "braiins",
   "summary": "This module configures sentry exception tracker.",
   "license": "Apache 2.0",
