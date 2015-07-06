@@ -179,7 +179,11 @@ $enable_supervisord_conf=false) inherits sentry::params {
       environment => {
         'HOME'   => $user_home,
         'USER'   => $user
-      }
+      },
+      stdout_logfile_maxbytes => '50MB',
+      stdout_logfile_backups  => '7',
+      stderr_logfile_maxbytes => '50MB',
+      stderr_logfile_backups  => '7',
     }
 
     supervisord::group { 'sentry':
