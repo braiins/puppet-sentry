@@ -75,12 +75,15 @@ $db_password, $backend_type, $super_user='admin', $super_user_email,
 $http_port, $url_prefix, $allowed_hosts, $secret_key, $server_email,
 $enable_supervisord_conf=false) inherits sentry::params {
 
-  $sentry_exec = '/usr/local/bin/sentry'
-  $sentry_init = "${sentry_exec} init"
-  $sentry_upgrade = "${sentry_exec} upgrade"
 
   $user_home = getparam(User[$user], 'home')
+  $sentry_root = "${user_home}/sentry"
+  $sentry_venv_path = "${sentry_root}/.env"
   $config_path = "${user_home}/${config_dir}"
+
+  $sentry_exec = "${sentry_venv_path}/bin/sentry"
+  $sentry_init = "${sentry_exec} init"
+  $sentry_upgrade = "${sentry_exec} upgrade"
 
   # All exec's run under the admin user
   Exec {
@@ -95,20 +98,41 @@ $enable_supervisord_conf=false) inherits sentry::params {
       $db_name => {
 	'user'     => $db_user,
 	'password' => $db_password,
-	'before'   => Package['sentry'],
+	'before'   => Python::Pip['sentry'],
       }
     }
     create_resources("sentry::${backend_type}_db", $db_params)
   }
 
-  file { $config_path:
-    ensure => directory,
-    owner  => $user,
-    group  => $user,
+  file { $sentry_root:
+     ensure => directory,
+     owner  => $user,
+     group  => $user,
   } ->
-  package { 'sentry':
-    ensure   => present,
-    provider => pip,
+  package { ['libxslt1-dev',
+             'libxml2-dev',
+             'libffi-dev',
+             'libpq-dev']:
+    ensure => present,
+  } ->
+  python::virtualenv { $sentry_venv_path:
+    ensure       => present,
+    version      => 'system',
+    systempkgs   => false,
+    owner        => $user,
+    group        => $user,
+    cwd          => $sentry_root,
+    timeout      => 0,
+  } ->
+  python::pip { ['sentry',
+                 'psycopg2'
+                ]:
+    virtualenv => $sentry_venv_path,
+  } ->
+  file { $config_path:
+     ensure => directory,
+     owner  => $user,
+     group  => $user,
   }
 
   # Deploy backend specific configuration
@@ -133,7 +157,9 @@ $enable_supervisord_conf=false) inherits sentry::params {
   } ->
   # Populate/upgrade the database tables
   exec { $sentry_upgrade:
-    require => Package['sentry']
+    require => [ Python::Pip['sentry'],
+                 Python::Pip['psycopg2']
+               ],
   }
 
   # Deploy the super user (optional)
@@ -161,10 +187,10 @@ $enable_supervisord_conf=false) inherits sentry::params {
       programs => ['sentry-web', 'sentry-worker',]
     } ->
     supervisord::program { 'sentry-web':
-      command => 'sentry start',
+      command => "${sentry_exec} start",
     } ->
     supervisord::program { 'sentry-worker':
-      command => 'sentry celery worker -B',
+      command => "${sentry_exec} celery worker -B",
     }
   }
 }
