@@ -115,6 +115,10 @@ $enable_supervisord_conf=false) inherits sentry::params {
              'libpq-dev']:
     ensure => present,
   } ->
+  class { 'redis':
+    system_sysctl    => true,
+    conf_nosave      => true,
+  } ->
   python::virtualenv { $sentry_venv_path:
     ensure       => present,
     version      => 'system',
