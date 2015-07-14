@@ -37,7 +37,7 @@
 define sentry::postgres_backend($db_host, $db_port, $db_name, $db_user,
 $db_password) {
 
-  $django_backend = 'django.db.backends.postgresql_psycopg2',
+  $django_backend = 'django.db.backends.postgresql_psycopg2'
   sentry::config { "${name}-sentry::postgres_backend":
     owner    => $name,
     filename => 'sentry_backend_config.py',
